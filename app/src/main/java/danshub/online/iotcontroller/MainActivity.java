@@ -59,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
-                connectClick();
+                connectClient();
             }
         });
     }
@@ -111,7 +111,22 @@ public class MainActivity extends AppCompatActivity {
     KeyStore clientKeyStore = null;
     String certificateId;
 
-    public void connectClick() {
+    /**
+     * Method Disconnects MQTT Client 
+     */
+    public void disconnectClient() {
+        try {
+            mqttManager.disconnect();
+            Log.v(LOG_TAG, "MQTT Client Disconnected");
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Disconnect error.", e);
+        }
+    }
+
+    /**
+     * Method connects to MQTT AWS Service
+     */
+    public void connectClient() {
         Log.d(LOG_TAG, "clientId = " + clientId);
 
         try {
