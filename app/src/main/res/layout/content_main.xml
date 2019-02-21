@@ -8,6 +8,34 @@
     tools:context=".MainActivity"
     tools:showIn="@layout/activity_main">
 
+    <Switch
+        android:id="@+id/pir_switch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:checked="true"
+        android:switchMinWidth="28dp"
+        android:text="@string/pir_sensor_switch"
+        android:textOff="OFF"
+        android:textOn="ON"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Switch
+        android:id="@+id/sound_switch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="20dp"
+        android:checked="true"
+        android:switchMinWidth="28dp"
+        android:text="@string/sound_sensor_switch"
+        android:textOff="OFF"
+        android:textOn="ON"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/pir_switch" />
+
     <Button
         android:id="@+id/sampleRateButton"
         android:layout_width="wrap_content"
@@ -17,4 +45,15 @@
         android:text="@string/sample_rate_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/sendCommand"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:text="Button"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/sampleRateButton" />
+
 </android.support.constraint.ConstraintLayout>

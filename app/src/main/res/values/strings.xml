@@ -2,4 +2,6 @@
     <string name="app_name">IoTController</string>
     <string name="action_settings">Settings</string>
     <string name="sample_rate_button">Change Sample Rate</string>
+    <string name="pir_sensor_switch">Motion Sensor</string>
+    <string name="sound_sensor_switch">Sound Sensor</string>
 </resources>

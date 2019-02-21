@@ -9,6 +9,9 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.Switch;
 
 import com.amazonaws.mobile.client.AWSMobileClient;
 import com.amazonaws.mobile.client.Callback;
@@ -17,6 +20,7 @@ import com.amazonaws.mobileconnectors.iot.AWSIotKeystoreHelper;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttLastWillAndTestament;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager;
+import com.amazonaws.mobileconnectors.iot.AWSIotMqttNewMessageCallback;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttQos;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
@@ -25,12 +29,17 @@ import com.amazonaws.services.iot.model.AttachPrincipalPolicyRequest;
 import com.amazonaws.services.iot.model.CreateKeysAndCertificateRequest;
 import com.amazonaws.services.iot.model.CreateKeysAndCertificateResult;
 
+import org.json.JSONObject;
+
+import java.io.UnsupportedEncodingException;
 import java.security.KeyStore;
+import java.util.HashMap;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
 
     static final String LOG_TAG = MainActivity.class.getCanonicalName();
+    static final String commandTopic = "Android/Command";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResult(UserStateDetails result) {
                 initIoTClient();
+                connectClient();
             }
 
             @Override
@@ -53,13 +63,79 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        createButtons();
+        createSwitches();
+    }
+
+    public JSONObject buildCommand(String command, String value) {
+        try {
+            return new JSONObject().put("command", new JSONObject().put(command, value));
+        } catch (Exception e) {
+            Log.e(LOG_TAG, e.toString());
+            return null;
+        }
+    }
+
+    /**
+     * Method creates listener events for controlling switches
+     */
+    public void createSwitches() {
+        Switch pirSwitch = (Switch) findViewById(R.id.pir_switch);
+        Switch soundSwitch = (Switch) findViewById(R.id.sound_switch);
+
+        pirSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    Log.v(LOG_TAG, "PIR Switch On");
+                    publish(buildCommand("pir_sensor", "on"), commandTopic);
+                } else {
+                    Log.v(LOG_TAG, "PIR Switch Off");
+                    publish(buildCommand("pir_sensor", "off"), commandTopic);
+                }
+            }
+        });
+
+        soundSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    Log.v(LOG_TAG, "Sound Switch On");
+                    publish(buildCommand("sound_sensor", "on"), commandTopic);
+                } else {
+                    Log.v(LOG_TAG, "Sound Switch Off");
+                    publish(buildCommand("sound_sensor", "off"), commandTopic);
+                }
+            }
+        });
+    }
+
+    public void createButtons() {
         FloatingActionButton fab = findViewById(R.id.fab);
+        Button sampleRateButton = findViewById(R.id.sampleRateButton);
+        Button sendCommandButton = findViewById(R.id.sendCommand);
+
+        sampleRateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //publish("Hello", "Android/test");
+                subscribe("Android/test");
+            }
+        });
+
+        sendCommandButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                publish(buildCommand("pir_sensor", "off"), "Android/test");
+            }
+        });
+
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
-                connectClient();
+
+
             }
         });
     }
@@ -111,8 +187,47 @@ public class MainActivity extends AppCompatActivity {
     KeyStore clientKeyStore = null;
     String certificateId;
 
+    public void publish(JSONObject data, String topic) {
+        try {
+            mqttManager.publishString(data.toString(), topic, AWSIotMqttQos.QOS0);
+            Log.v(LOG_TAG, "Publish " + data + " to AWS");
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Publish error.", e);
+        }
+    }
+
+    public void subscribe(String topic) {
+
+        Log.d(LOG_TAG, "topic = " + topic);
+
+        try {
+            mqttManager.subscribeToTopic(topic, AWSIotMqttQos.QOS0,
+                    new AWSIotMqttNewMessageCallback() {
+                        @Override
+                        public void onMessageArrived(final String topic, final byte[] data) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        String message = new String(data, "UTF-8");
+                                        Log.d(LOG_TAG, "Message arrived:");
+                                        Log.d(LOG_TAG, "   Topic: " + topic);
+                                        Log.d(LOG_TAG, " Message: " + message);
+
+                                    } catch (UnsupportedEncodingException e) {
+                                        Log.e(LOG_TAG, "Message encoding error.", e);
+                                    }
+                                }
+                            });
+                        }
+                    });
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Subscription error.", e);
+        }
+    }
+
     /**
-     * Method Disconnects MQTT Client 
+     * Method Disconnects MQTT Client
      */
     public void disconnectClient() {
         try {
