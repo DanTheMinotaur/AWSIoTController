@@ -12,6 +12,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.Switch;
+import android.widget.TextView;
 
 import com.amazonaws.mobile.client.AWSMobileClient;
 import com.amazonaws.mobile.client.Callback;
@@ -29,17 +30,47 @@ import com.amazonaws.services.iot.model.AttachPrincipalPolicyRequest;
 import com.amazonaws.services.iot.model.CreateKeysAndCertificateRequest;
 import com.amazonaws.services.iot.model.CreateKeysAndCertificateResult;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.security.KeyStore;
-import java.util.HashMap;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
 
     static final String LOG_TAG = MainActivity.class.getCanonicalName();
     static final String commandTopic = "Android/Command";
+    static final String dataTopic = "PI/Data";
+
+    // IoT endpoint
+    // AWS Iot CLI describe-endpoint call returns: XXXXXXXXXX.iot.<region>.amazonaws.com
+    private static final String CUSTOMER_SPECIFIC_ENDPOINT = "a17mh16tz1p39u-ats.iot.eu-west-1.amazonaws.com";
+    // Name of the AWS IoT policy to attach to a newly created certificate
+    private static final String AWS_IOT_POLICY_NAME = "IOTAndroidPolicyFinal";
+
+    // Region of AWS IoT
+    private static final Regions MY_REGION = Regions.EU_WEST_1;
+    // Filename of KeyStore file on the filesystem
+    private static final String KEYSTORE_NAME = "iot_ca1_keystore";
+    // Password for the private key in the KeyStore
+    private static final String KEYSTORE_PASSWORD = "Hello123";
+    // Certificate and key aliases in the KeyStore
+    private static final String CERTIFICATE_ID = "default";
+
+    AWSIotClient mIotAndroidClient;
+    AWSIotMqttManager mqttManager;
+    String clientId;
+    String keystorePath;
+    String keystoreName;
+    String keystorePassword;
+
+    KeyStore clientKeyStore = null;
+    String certificateId;
+
+    JSONObject receievedIoTJSONdata;
+
+    private TextView motionEntry, soundEntry;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +96,13 @@ public class MainActivity extends AppCompatActivity {
 
         createButtons();
         createSwitches();
+        createTextViews();
+    }
+
+    public void createTextViews() {
+        motionEntry = findViewById(R.id.motionData);
+
+        motionEntry.setText("");
     }
 
     public JSONObject buildCommand(String command, String value) {
@@ -110,22 +148,13 @@ public class MainActivity extends AppCompatActivity {
 
     public void createButtons() {
         FloatingActionButton fab = findViewById(R.id.fab);
-        Button sampleRateButton = findViewById(R.id.sampleRateButton);
-        Button sendCommandButton = findViewById(R.id.sendCommand);
+        Button subscribeButton = findViewById(R.id.subscribeButton);
 
-        sampleRateButton.setOnClickListener(new View.OnClickListener() {
+        subscribeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 //publish("Hello", "Android/test");
-                subscribe("Android/test");
-            }
-        });
-
-        sendCommandButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                publish(buildCommand("pir_sensor", "off"), "Android/test");
+                subscribe(dataTopic);
             }
         });
 
@@ -162,30 +191,32 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    // IoT endpoint
-    // AWS Iot CLI describe-endpoint call returns: XXXXXXXXXX.iot.<region>.amazonaws.com
-    private static final String CUSTOMER_SPECIFIC_ENDPOINT = "a17mh16tz1p39u-ats.iot.eu-west-1.amazonaws.com";
-    // Name of the AWS IoT policy to attach to a newly created certificate
-    private static final String AWS_IOT_POLICY_NAME = "IOTAndroidPolicyFinal";
 
-    // Region of AWS IoT
-    private static final Regions MY_REGION = Regions.EU_WEST_1;
-    // Filename of KeyStore file on the filesystem
-    private static final String KEYSTORE_NAME = "iot_ca1_keystore";
-    // Password for the private key in the KeyStore
-    private static final String KEYSTORE_PASSWORD = "Hello123";
-    // Certificate and key aliases in the KeyStore
-    private static final String CERTIFICATE_ID = "default";
 
-    AWSIotClient mIotAndroidClient;
-    AWSIotMqttManager mqttManager;
-    String clientId;
-    String keystorePath;
-    String keystoreName;
-    String keystorePassword;
+    public void renderJsonData(JSONObject data) {
+        String pir = "pir_sensor";
 
-    KeyStore clientKeyStore = null;
-    String certificateId;
+        Log.v(LOG_TAG, data.toString());
+        try {
+            if (data.has("data")) {
+
+                JSONObject recieved_data = (JSONObject) data.get("data");
+                Log.v(LOG_TAG, "Json has data key");
+
+                if(recieved_data.has(pir)) {
+                    Boolean pir_data = (Boolean) recieved_data.get(pir);
+                    Log.v(LOG_TAG, pir_data.toString());
+                    if (pir_data) {
+                        motionEntry.setText("Motion Detected");
+                    } else {
+                        motionEntry.setText("No Motion Detected");
+                    }
+                }
+            }
+        } catch (JSONException e) {
+            Log.e(LOG_TAG, e.toString());
+        }
+    }
 
     public void publish(JSONObject data, String topic) {
         try {
@@ -213,6 +244,12 @@ public class MainActivity extends AppCompatActivity {
                                         Log.d(LOG_TAG, "Message arrived:");
                                         Log.d(LOG_TAG, "   Topic: " + topic);
                                         Log.d(LOG_TAG, " Message: " + message);
+                                        try {
+                                            receievedIoTJSONdata = new JSONObject(message);
+                                            renderJsonData(receievedIoTJSONdata);
+                                        } catch (JSONException e) {
+                                            Log.e(LOG_TAG, "Invalid Json Message ", e);
+                                        }
 
                                     } catch (UnsupportedEncodingException e) {
                                         Log.e(LOG_TAG, "Message encoding error.", e);

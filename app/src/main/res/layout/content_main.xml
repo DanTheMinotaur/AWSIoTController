@@ -15,10 +15,12 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:checked="true"
-        android:switchMinWidth="28dp"
-        android:text="@string/pir_sensor_switch"
-        android:textOff="OFF"
-        android:textOn="ON"
+        android:switchMinWidth="30dp"
+        android:switchPadding="20dp"
+        android:text="@string/pir_sensor"
+        android:textOff="@string/switch_off"
+        android:textOn="@string/switch_on"
+        android:thumbTextPadding="25dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -30,30 +32,79 @@
         android:layout_marginTop="20dp"
         android:checked="true"
         android:switchMinWidth="28dp"
-        android:text="@string/sound_sensor_switch"
-        android:textOff="OFF"
-        android:textOn="ON"
+        android:text="@string/sound_sensor"
+        android:textOff="@string/switch_off"
+        android:textOn="@string/switch_on"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/pir_switch" />
 
     <Button
-        android:id="@+id/sampleRateButton"
+        android:id="@+id/subscribeButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
         android:text="@string/sample_rate_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
-        android:id="@+id/sendCommand"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <TableLayout
+        android:id="@+id/displayData"
+        android:layout_width="395dp"
+        android:layout_height="403dp"
+        android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
-        android:text="Button"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/sampleRateButton" />
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="1.0" >
+
+        <TableRow
+            android:id="@+id/header"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:layout_width="141dp"
+                android:padding="3dip"
+                android:text="@string/table_data_type_header" />
+
+            <TextView
+                android:layout_width="133dp"
+                android:padding="3dip"
+                android:text="@string/table_data_value_header" />
+
+            <TextView
+                android:layout_width="123dp"
+                android:padding="3dip"
+                android:text="@string/table_time_header" />
+        </TableRow>
+
+        <TableRow
+            android:id="@+id/pir_data"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/pir_sensor"
+                android:layout_width="141dp"
+                android:padding="3dip"
+                android:text="@string/pir_sensor" />
+
+            <TextView
+                android:id="@+id/motionData"
+                android:layout_width="133dp"
+                android:padding="3dip" />
+
+            <TextView
+                android:id="@+id/motionTime"
+                android:layout_width="123dp"
+                android:padding="3dip" />
+        </TableRow>
+    </TableLayout>
 
 </android.support.constraint.ConstraintLayout>
