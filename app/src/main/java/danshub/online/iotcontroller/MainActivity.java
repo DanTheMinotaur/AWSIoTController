@@ -100,9 +100,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void createTextViews() {
-        motionEntry = findViewById(R.id.motionData);
+        motionEntry = findViewById(R.id.motionDataTextView);
+        soundEntry = findViewById(R.id.soundDataTextView);
 
         motionEntry.setText("");
+        soundEntry.setText("");
     }
 
     public JSONObject buildCommand(String command, String value) {
@@ -191,25 +193,36 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-
-
     public void renderJsonData(JSONObject data) {
         String pir = "pir_sensor";
+        String sound = "sound_sensor";
 
         Log.v(LOG_TAG, data.toString());
         try {
             if (data.has("data")) {
 
-                JSONObject recieved_data = (JSONObject) data.get("data");
+                JSONObject received_data = (JSONObject) data.get("data");
                 Log.v(LOG_TAG, "Json has data key");
 
-                if(recieved_data.has(pir)) {
-                    Boolean pir_data = (Boolean) recieved_data.get(pir);
+                // TODO these are the same basic method, refactor to avoid duplication.
+                if(received_data.has(pir)) {
+                    Boolean pir_data = (Boolean) received_data.get(pir);
                     Log.v(LOG_TAG, pir_data.toString());
                     if (pir_data) {
                         motionEntry.setText("Motion Detected");
                     } else {
                         motionEntry.setText("No Motion Detected");
+                    }
+                }
+
+                if(received_data.has(sound)) {
+                    Boolean sound_data = (Boolean) received_data.get(sound);
+                    Log.v(LOG_TAG, sound_data.toString());
+
+                    if (sound_data) {
+                        soundEntry.setText("Sound Detected");
+                    } else {
+                        soundEntry.setText("All's Quite");
                     }
                 }
             }

@@ -96,12 +96,33 @@
                 android:text="@string/pir_sensor" />
 
             <TextView
-                android:id="@+id/motionData"
+                android:id="@+id/motionDataTextView"
                 android:layout_width="133dp"
                 android:padding="3dip" />
 
             <TextView
                 android:id="@+id/motionTime"
+                android:layout_width="123dp"
+                android:padding="3dip" />
+        </TableRow>
+        <TableRow
+            android:id="@+id/sound_data"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/sound_sensor"
+                android:layout_width="141dp"
+                android:padding="3dip"
+                android:text="@string/pir_sensor" />
+
+            <TextView
+                android:id="@+id/soundDataTextView"
+                android:layout_width="133dp"
+                android:padding="3dip" />
+
+            <TextView
+                android:id="@+id/soundTime"
                 android:layout_width="123dp"
                 android:padding="3dip" />
         </TableRow>
