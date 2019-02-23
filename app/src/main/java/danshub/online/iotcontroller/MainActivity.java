@@ -8,6 +8,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
@@ -35,6 +36,7 @@ import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.security.KeyStore;
+import java.util.TreeMap;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
@@ -71,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
     JSONObject receievedIoTJSONdata;
 
     private TextView motionEntry, soundEntry;
+    //private FloatingActionButton alarmButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -127,10 +130,10 @@ public class MainActivity extends AppCompatActivity {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
                     Log.v(LOG_TAG, "PIR Switch On");
-                    publish(buildCommand("pir_sensor", "on"), commandTopic);
+                    publish(buildCommand("motion", "on"), commandTopic);
                 } else {
                     Log.v(LOG_TAG, "PIR Switch Off");
-                    publish(buildCommand("pir_sensor", "off"), commandTopic);
+                    publish(buildCommand("motion", "off"), commandTopic);
                 }
             }
         });
@@ -139,10 +142,10 @@ public class MainActivity extends AppCompatActivity {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
                     Log.v(LOG_TAG, "Sound Switch On");
-                    publish(buildCommand("sound_sensor", "on"), commandTopic);
+                    publish(buildCommand("sound", "on"), commandTopic);
                 } else {
                     Log.v(LOG_TAG, "Sound Switch Off");
-                    publish(buildCommand("sound_sensor", "off"), commandTopic);
+                    publish(buildCommand("sound", "off"), commandTopic);
                 }
             }
         });
@@ -151,6 +154,8 @@ public class MainActivity extends AppCompatActivity {
     public void createButtons() {
         FloatingActionButton fab = findViewById(R.id.fab);
         Button subscribeButton = findViewById(R.id.subscribeButton);
+        FloatingActionButton alarmButton = findViewById(R.id.buzzerButton);
+
 
         subscribeButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -167,6 +172,19 @@ public class MainActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
 
 
+            }
+        });
+        alarmButton.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if(event.getAction() == MotionEvent.ACTION_DOWN) {
+                    Log.v(LOG_TAG, "Alarm Button Press");
+                    publish(buildCommand("buzzer", "on"), commandTopic);
+                } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                    Log.v(LOG_TAG, "Alarm Button Lift");
+                    publish(buildCommand("buzzer", "off"), commandTopic);
+                }
+                return true;
             }
         });
     }
@@ -194,8 +212,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void renderJsonData(JSONObject data) {
-        String pir = "pir_sensor";
-        String sound = "sound_sensor";
+        String pir = "motion";
+        String sound = "sound";
 
         Log.v(LOG_TAG, data.toString());
         try {
@@ -354,14 +372,6 @@ public class MainActivity extends AppCompatActivity {
                             keystorePath, keystoreName, keystorePassword);
                     /* initIoTClient is invoked from the callback passed during AWSMobileClient initialization.
                     The callback is executed on a background thread so UI update must be moved to run on UI Thread. */
-                    /*
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            btnConnect.setEnabled(true);
-                        }
-                    });
-                    */
                 } else {
                     Log.i(LOG_TAG, "Key/cert " + certificateId + " not found in keystore.");
                 }
@@ -417,14 +427,6 @@ public class MainActivity extends AppCompatActivity {
                                 .getCertificateArn());
                         mIotAndroidClient.attachPrincipalPolicy(policyAttachRequest);
 
-                        /*
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                btnConnect.setEnabled(true);
-                            }
-                        });
-                        */
                     } catch (Exception e) {
                         Log.e(LOG_TAG,
                                 "Exception occurred when generating new private key and certificate.",

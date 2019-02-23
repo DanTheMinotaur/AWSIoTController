@@ -13,30 +13,41 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="16dp"
         android:checked="true"
         android:switchMinWidth="30dp"
         android:switchPadding="20dp"
-        android:text="@string/pir_sensor"
         android:textOff="@string/switch_off"
         android:textOn="@string/switch_on"
         android:thumbTextPadding="25dp"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/motionText"
         app:layout_constraintTop_toTopOf="parent" />
 
     <Switch
         android:id="@+id/sound_switch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="28dp"
         android:checked="true"
         android:switchMinWidth="28dp"
-        android:text="@string/sound_sensor"
         android:textOff="@string/switch_off"
         android:textOn="@string/switch_on"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/motionText4"
         app:layout_constraintTop_toBottomOf="@+id/pir_switch" />
+
+    <Switch
+        android:id="@+id/sound_switch2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="24dp"
+        android:checked="true"
+        android:switchMinWidth="28dp"
+        android:textOff="@string/switch_off"
+        android:textOn="@string/switch_on"
+        app:layout_constraintStart_toEndOf="@+id/motionText5"
+        app:layout_constraintTop_toBottomOf="@+id/sound_switch" />
 
     <Button
         android:id="@+id/subscribeButton"
@@ -114,7 +125,7 @@
                 android:id="@+id/sound_sensor"
                 android:layout_width="141dp"
                 android:padding="3dip"
-                android:text="@string/pir_sensor" />
+                android:text="@string/sound_sensor" />
 
             <TextView
                 android:id="@+id/soundDataTextView"
@@ -127,5 +138,55 @@
                 android:padding="3dip" />
         </TableRow>
     </TableLayout>
+
+    <EditText
+        android:id="@+id/motionText"
+        android:layout_width="142dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:text="@string/pir_sensor"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <EditText
+        android:id="@+id/motionText4"
+        android:layout_width="142dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:text="@string/sound_sensor"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/motionText" />
+
+    <EditText
+        android:id="@+id/motionText5"
+        android:layout_width="142dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:text="@string/light_sensor"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/motionText4" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/buzzerButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="188dp"
+        android:layout_marginEnd="164dp"
+        android:clickable="true"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.923"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@android:drawable/ic_lock_idle_alarm" />
 
 </android.support.constraint.ConstraintLayout>
