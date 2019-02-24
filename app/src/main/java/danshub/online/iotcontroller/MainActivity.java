@@ -32,6 +32,7 @@ import com.amazonaws.services.iot.model.CreateKeysAndCertificateResult;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.io.UnsupportedEncodingException;
 import java.security.KeyStore;
@@ -74,9 +75,9 @@ public class MainActivity extends AppCompatActivity {
 
     JSONObject receievedIoTJSONdata;
 
+    private HashMap<String, TextView> displayDataTextViews;
     private TextView motionEntry, soundEntry, lightEntry;
     private TextView motionBroadcastRateTextView, soundBroadcastRateTextView, lightBroadcastRateTextView;
-    //private FloatingActionButton alarmButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResult(UserStateDetails result) {
                 initIoTClient();
-                connectClient();
+
             }
 
             @Override
@@ -107,15 +108,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void createTextViews() {
-        motionEntry = findViewById(R.id.motionDataTextView);
-        soundEntry = findViewById(R.id.soundDataTextView);
+        displayDataTextViews = new HashMap<>();
+        displayDataTextViews.put("motion", (TextView) findViewById(R.id.motionEntry));
 
         motionBroadcastRateTextView = findViewById(R.id.motionBroadcastRateTextView);
         soundBroadcastRateTextView = findViewById(R.id.soundBroadcastRateTextView);
         lightBroadcastRateTextView = findViewById(R.id.lightBroadcastRateTextView);
-
-        motionEntry.setText("");
-        soundEntry.setText("");
 
         motionBroadcastRateTextView.setText("");
         soundBroadcastRateTextView.setText("");
@@ -163,45 +161,34 @@ public class MainActivity extends AppCompatActivity {
      * Method creates listener events for controlling switches
      */
     public void createSwitches() {
-        Switch pirSwitch = (Switch) findViewById(R.id.pir_switch);
-        Switch soundSwitch = (Switch) findViewById(R.id.sound_switch);
-        Switch lightSwitch = findViewById(R.id.light_switch);
+        HashMap<String, Switch> switches = new HashMap<>();
+        switches.put("motion", (Switch) findViewById(R.id.pir_switch));
+        switches.put("sound", (Switch) findViewById(R.id.sound_switch));
+        switches.put("light", (Switch) findViewById(R.id.light_switch));
 
-        lightSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    Log.v(LOG_TAG, "Light Switch On");
-                    publish(buildCommand("light", "on"), commandTopic);
-                } else {
-                    Log.v(LOG_TAG, "Light Switch Off");
-                    publish(buildCommand("light", "off"), commandTopic);
-                }
-            }
-        });
+        Iterator map = switches.entrySet().iterator();
 
-        pirSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    Log.v(LOG_TAG, "PIR Switch On");
-                    publish(buildCommand("motion", "on"), commandTopic);
-                } else {
-                    Log.v(LOG_TAG, "PIR Switch Off");
-                    publish(buildCommand("motion", "off"), commandTopic);
-                }
-            }
-        });
+        while (map.hasNext()) {
+            Map.Entry current = (Map.Entry)map.next();
+            Switch currentSwitch = (Switch) current.getValue();
+            final String switchType = (String) current.getKey();
 
-        soundSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    Log.v(LOG_TAG, "Sound Switch On");
-                    publish(buildCommand("sound", "on"), commandTopic);
-                } else {
-                    Log.v(LOG_TAG, "Sound Switch Off");
-                    publish(buildCommand("sound", "off"), commandTopic);
+            currentSwitch.setChecked(false);
+
+            currentSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    String switchName = switchType.toUpperCase();
+                    if (isChecked) {
+                        Log.v(LOG_TAG, switchName + " Switch On");
+                        publish(buildCommand(switchType, "on"), commandTopic);
+                    } else {
+                        Log.v(LOG_TAG, switchName + " Switch Off");
+                        publish(buildCommand(switchType, "off"), commandTopic);
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     public void createButtons() {
@@ -237,17 +224,16 @@ public class MainActivity extends AppCompatActivity {
             bar.setMax(100);
             bar.setProgress(10);
             bar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                private int progress = 0;
                 @Override
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    this.progress = progress;
                     if (progress == 0) {
-                        progress = 1;
+                        this.progress = 1;
                     }
+                    Log.v(LOG_TAG, "Current Progress for " + barType + " slider: " + this.progress);
 
-                    Log.v(LOG_TAG, "Current Progress for " + barType + " slider: " + progress);
-
-                    publish(buildCommand(barType, "broadcast_rate", progress), commandTopic);
-
-                    String currentRate = progress + "s";
+                    String currentRate = this.progress + "s";
                     if(barType.equals("motion")) {
                         motionBroadcastRateTextView.setText(currentRate);
                     } else if (barType.equals("sound")) {
@@ -264,7 +250,7 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onStopTrackingTouch(SeekBar seekBar) {
-
+                    publish(buildCommand(barType, "broadcast_rate", this.progress), commandTopic);
                 }
             });
         }
@@ -293,35 +279,28 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void renderJsonData(JSONObject data) {
-        String pir = "motion";
-        String sound = "sound";
-
         Log.v(LOG_TAG, data.toString());
         try {
             if (data.has("data")) {
+                HashMap<String, TextView> dataTypes = new HashMap<>(displayDataTextViews);
+                Iterator map = dataTypes.entrySet().iterator();
 
                 JSONObject received_data = (JSONObject) data.get("data");
                 Log.v(LOG_TAG, "Json has data key");
 
-                // TODO these are the same basic method, refactor to avoid duplication.
-                if(received_data.has(pir)) {
-                    Boolean pir_data = (Boolean) received_data.get(pir);
-                    Log.v(LOG_TAG, pir_data.toString());
-                    if (pir_data) {
-                        motionEntry.setText("Motion Detected");
-                    } else {
-                        motionEntry.setText("No Motion Detected");
-                    }
-                }
-
-                if(received_data.has(sound)) {
-                    Boolean sound_data = (Boolean) received_data.get(sound);
-                    Log.v(LOG_TAG, sound_data.toString());
-
-                    if (sound_data) {
-                        soundEntry.setText("Sound Detected");
-                    } else {
-                        soundEntry.setText("All's Quite");
+                while (map.hasNext()) {
+                    Map.Entry current = (Map.Entry)map.next();
+                    String key = (String) current.getKey();
+                    if(received_data.has(key)) {
+                        TextView viewToUpdate = (TextView) current.getValue();
+                        Boolean dataValue = (Boolean) received_data.get(key);
+                        String result;
+                        if(dataValue) {
+                            result = key.toUpperCase() + " Detected!";
+                        } else {
+                            result = "No " + key.toUpperCase() + " Detected!";
+                        }
+                        viewToUpdate.setText(result);
                     }
                 }
             }
@@ -390,7 +369,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Method connects to MQTT AWS Service
      */
-    public void connectClient() {
+    public Boolean connectClient() {
         Log.d(LOG_TAG, "clientId = " + clientId);
 
         try {
@@ -413,7 +392,9 @@ public class MainActivity extends AppCompatActivity {
             });
         } catch (final Exception e) {
             Log.e(LOG_TAG, "Connection error.", e);
+            return false;
         }
+        return true;
     }
 
     void initIoTClient() {
