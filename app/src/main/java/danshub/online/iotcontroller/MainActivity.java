@@ -36,6 +36,7 @@ import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.security.KeyStore;
+import java.util.HashMap;
 import java.util.TreeMap;
 import java.util.UUID;
 
@@ -119,12 +120,35 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public JSONObject buildCommand(String command, String subKey, String value) {
+        try {
+            JSONObject subcommandJson = new JSONObject().put(subKey, value);
+            return new JSONObject().put("command", new JSONObject().put(command, subcommandJson));
+        } catch (Exception e) {
+            Log.e(LOG_TAG, e.toString());
+            return null;
+        }
+    }
+
     /**
      * Method creates listener events for controlling switches
      */
     public void createSwitches() {
         Switch pirSwitch = (Switch) findViewById(R.id.pir_switch);
         Switch soundSwitch = (Switch) findViewById(R.id.sound_switch);
+        Switch lightSwitch = findViewById(R.id.light_switch);
+
+        lightSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    Log.v(LOG_TAG, "Light Switch On");
+                    publish(buildCommand("light", "on"), commandTopic);
+                } else {
+                    Log.v(LOG_TAG, "Light Switch Off");
+                    publish(buildCommand("light", "off"), commandTopic);
+                }
+            }
+        });
 
         pirSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -152,28 +176,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void createButtons() {
-        FloatingActionButton fab = findViewById(R.id.fab);
-        Button subscribeButton = findViewById(R.id.subscribeButton);
         FloatingActionButton alarmButton = findViewById(R.id.buzzerButton);
 
-
-        subscribeButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //publish("Hello", "Android/test");
-                subscribe(dataTopic);
-            }
-        });
-
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-
-
-            }
-        });
         alarmButton.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
