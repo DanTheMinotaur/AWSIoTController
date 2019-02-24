@@ -2,7 +2,6 @@ package danshub.online.iotcontroller;
 
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -10,8 +9,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 
@@ -36,8 +35,10 @@ import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.security.KeyStore;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.TreeMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
@@ -73,7 +74,8 @@ public class MainActivity extends AppCompatActivity {
 
     JSONObject receievedIoTJSONdata;
 
-    private TextView motionEntry, soundEntry;
+    private TextView motionEntry, soundEntry, lightEntry;
+    private TextView motionBroadcastRateTextView, soundBroadcastRateTextView, lightBroadcastRateTextView;
     //private FloatingActionButton alarmButton;
 
     @Override
@@ -101,17 +103,35 @@ public class MainActivity extends AppCompatActivity {
         createButtons();
         createSwitches();
         createTextViews();
+        createSliders();
     }
 
     public void createTextViews() {
         motionEntry = findViewById(R.id.motionDataTextView);
         soundEntry = findViewById(R.id.soundDataTextView);
 
+        motionBroadcastRateTextView = findViewById(R.id.motionBroadcastRateTextView);
+        soundBroadcastRateTextView = findViewById(R.id.soundBroadcastRateTextView);
+        lightBroadcastRateTextView = findViewById(R.id.lightBroadcastRateTextView);
+
         motionEntry.setText("");
         soundEntry.setText("");
+
+        motionBroadcastRateTextView.setText("");
+        soundBroadcastRateTextView.setText("");
+        lightBroadcastRateTextView.setText("");
     }
 
     public JSONObject buildCommand(String command, String value) {
+        try {
+            return new JSONObject().put("command", new JSONObject().put(command, value));
+        } catch (Exception e) {
+            Log.e(LOG_TAG, e.toString());
+            return null;
+        }
+    }
+
+    public JSONObject buildCommand(String command, int value) {
         try {
             return new JSONObject().put("command", new JSONObject().put(command, value));
         } catch (Exception e) {
@@ -130,6 +150,15 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public JSONObject buildCommand(String command, String subKey, int value) {
+        try {
+            JSONObject subcommandJson = new JSONObject().put(subKey, value);
+            return new JSONObject().put("command", new JSONObject().put(command, subcommandJson));
+        } catch (Exception e) {
+            Log.e(LOG_TAG, e.toString());
+            return null;
+        }
+    }
     /**
      * Method creates listener events for controlling switches
      */
@@ -191,6 +220,54 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
+    }
+
+    public void createSliders() {
+        HashMap<String, SeekBar> broadcastSliders = new HashMap<>();
+        broadcastSliders.put("motion", (SeekBar) findViewById(R.id.motionBroadcastRateSlider));
+        broadcastSliders.put("sound", (SeekBar) findViewById(R.id.soundBroadcastRateSlider));
+        broadcastSliders.put("light", (SeekBar) findViewById(R.id.lightBroadcastRateSlider));
+
+        Iterator map = broadcastSliders.entrySet().iterator();
+
+        while (map.hasNext()) {
+            Map.Entry slider = (Map.Entry)map.next();
+            final SeekBar bar = (SeekBar) slider.getValue();
+            final String barType = (String) slider.getKey();
+            bar.setMax(100);
+            bar.setProgress(10);
+            bar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (progress == 0) {
+                        progress = 1;
+                    }
+
+                    Log.v(LOG_TAG, "Current Progress for " + barType + " slider: " + progress);
+
+                    publish(buildCommand(barType, "broadcast_rate", progress), commandTopic);
+
+                    String currentRate = progress + "s";
+                    if(barType.equals("motion")) {
+                        motionBroadcastRateTextView.setText(currentRate);
+                    } else if (barType.equals("sound")) {
+                        soundBroadcastRateTextView.setText(currentRate);
+                    } else if (barType.equals("light")) {
+                        lightBroadcastRateTextView.setText(currentRate);
+                    }
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+
+                }
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+
+                }
+            });
+        }
     }
 
     @Override

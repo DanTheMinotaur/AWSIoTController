@@ -13,7 +13,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="40dp"
         android:checked="true"
         android:switchMinWidth="30dp"
         android:switchPadding="20dp"
@@ -28,12 +28,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="28dp"
+        android:layout_marginTop="24dp"
         android:checked="true"
         android:switchMinWidth="28dp"
         android:textOff="@string/switch_off"
         android:textOn="@string/switch_on"
-        app:layout_constraintStart_toEndOf="@+id/motionText4"
+        app:layout_constraintStart_toEndOf="@+id/soundText"
         app:layout_constraintTop_toBottomOf="@+id/pir_switch" />
 
     <Switch
@@ -41,12 +41,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="28dp"
         android:checked="true"
         android:switchMinWidth="28dp"
         android:textOff="@string/switch_off"
         android:textOn="@string/switch_on"
-        app:layout_constraintStart_toEndOf="@+id/motionText5"
+        app:layout_constraintStart_toEndOf="@+id/lightText"
         app:layout_constraintTop_toBottomOf="@+id/sound_switch" />
 
     <TableLayout
@@ -131,10 +131,10 @@
 
     <EditText
         android:id="@+id/motionText"
-        android:layout_width="142dp"
-        android:layout_height="wrap_content"
+        android:layout_width="100dp"
+        android:layout_height="41dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="36dp"
         android:ems="10"
         android:inputType="textPersonName"
         android:text="@string/pir_sensor"
@@ -142,8 +142,8 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <EditText
-        android:id="@+id/motionText4"
-        android:layout_width="142dp"
+        android:id="@+id/soundText"
+        android:layout_width="100dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
@@ -154,8 +154,8 @@
         app:layout_constraintTop_toBottomOf="@+id/motionText" />
 
     <EditText
-        android:id="@+id/motionText5"
-        android:layout_width="142dp"
+        android:id="@+id/lightText"
+        android:layout_width="100dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
@@ -163,7 +163,7 @@
         android:inputType="textPersonName"
         android:text="@string/light_sensor"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/motionText4" />
+        app:layout_constraintTop_toBottomOf="@+id/soundText" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/buzzerButton"
@@ -180,5 +180,65 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@android:drawable/ic_lock_idle_alarm" />
+
+    <SeekBar
+        android:id="@+id/motionBroadcastRateSlider"
+        android:layout_width="160dp"
+        android:layout_height="27dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="40dp"
+        android:max="100"
+        app:layout_constraintStart_toEndOf="@+id/pir_switch"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <SeekBar
+        android:id="@+id/soundBroadcastRateSlider"
+        android:layout_width="160dp"
+        android:layout_height="27dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="24dp"
+        android:max="100"
+        app:layout_constraintStart_toEndOf="@+id/sound_switch"
+        app:layout_constraintTop_toBottomOf="@+id/motionBroadcastRateSlider" />
+
+    <SeekBar
+        android:id="@+id/lightBroadcastRateSlider"
+        android:layout_width="160dp"
+        android:layout_height="27dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="28dp"
+        android:max="100"
+        app:layout_constraintStart_toEndOf="@+id/light_switch"
+        app:layout_constraintTop_toBottomOf="@+id/soundBroadcastRateSlider" />
+
+    <TextView
+        android:id="@+id/motionBroadcastRateTextView"
+        android:layout_width="80dp"
+        android:layout_height="27dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="40dp"
+        android:text="TextView"
+        app:layout_constraintStart_toEndOf="@+id/motionBroadcastRateSlider"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/soundBroadcastRateTextView"
+        android:layout_width="80dp"
+        android:layout_height="27dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="24dp"
+        android:text="TextView"
+        app:layout_constraintStart_toEndOf="@+id/soundBroadcastRateSlider"
+        app:layout_constraintTop_toBottomOf="@+id/motionBroadcastRateTextView" />
+
+    <TextView
+        android:id="@+id/lightBroadcastRateTextView"
+        android:layout_width="80dp"
+        android:layout_height="27dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="28dp"
+        android:text="TextView"
+        app:layout_constraintStart_toEndOf="@+id/lightBroadcastRateSlider"
+        app:layout_constraintTop_toBottomOf="@+id/soundBroadcastRateTextView" />
 
 </android.support.constraint.ConstraintLayout>
