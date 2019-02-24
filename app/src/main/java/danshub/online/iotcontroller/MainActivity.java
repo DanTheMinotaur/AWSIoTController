@@ -9,6 +9,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.SeekBar;
 import android.widget.Switch;
@@ -36,7 +37,6 @@ import org.w3c.dom.Text;
 
 import java.io.UnsupportedEncodingException;
 import java.security.KeyStore;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -75,7 +75,10 @@ public class MainActivity extends AppCompatActivity {
 
     JSONObject receievedIoTJSONdata;
 
-    private HashMap<String, TextView> displayDataTextViews;
+    private Boolean awsInitialisedStatus = false;
+    private Boolean awsConnectedStatus = false;
+
+    private HashMap<String, HashMap> displayDataTextViews;
     private TextView motionEntry, soundEntry, lightEntry;
     private TextView motionBroadcastRateTextView, soundBroadcastRateTextView, lightBroadcastRateTextView;
 
@@ -107,9 +110,23 @@ public class MainActivity extends AppCompatActivity {
         createSliders();
     }
 
+    public HashMap buildDisplayView(TextView dataStatus, TextView receivedData, TextView dataTime) {
+        HashMap<String, TextView> displayView = new HashMap<>();
+        displayView.put("status", dataStatus);
+        displayView.put("data", receivedData);
+        displayView.put("time", dataTime);
+        return displayView;
+    }
+
     public void createTextViews() {
         displayDataTextViews = new HashMap<>();
-        displayDataTextViews.put("motion", (TextView) findViewById(R.id.motionEntry));
+
+        //displayDataTextViews.put("motion", (TextView) findViewById(R.id.motionDataStatus));
+        displayDataTextViews.put("motion", buildDisplayView(
+                (TextView) findViewById(R.id.motionDataStatus),
+                (TextView) findViewById(R.id.motionData),
+                (TextView) findViewById(R.id.motionDataTime)
+        ));
 
         motionBroadcastRateTextView = findViewById(R.id.motionBroadcastRateTextView);
         soundBroadcastRateTextView = findViewById(R.id.soundBroadcastRateTextView);
@@ -121,6 +138,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public JSONObject buildCommand(String command, String value) {
+        try {
+            return new JSONObject().put("command", new JSONObject().put(command, value));
+        } catch (Exception e) {
+            Log.e(LOG_TAG, e.toString());
+            return null;
+        }
+    }
+
+    public JSONObject buildCommand(String command, Boolean value) {
         try {
             return new JSONObject().put("command", new JSONObject().put(command, value));
         } catch (Exception e) {
@@ -157,8 +183,10 @@ public class MainActivity extends AppCompatActivity {
             return null;
         }
     }
+
+
     /**
-     * Method creates listener events for controlling switches
+     * Method creates listener events for controlling switches and sets their statuses
      */
     public void createSwitches() {
         HashMap<String, Switch> switches = new HashMap<>();
@@ -181,28 +209,40 @@ public class MainActivity extends AppCompatActivity {
                     String switchName = switchType.toUpperCase();
                     if (isChecked) {
                         Log.v(LOG_TAG, switchName + " Switch On");
-                        publish(buildCommand(switchType, "on"), commandTopic);
+                        publish(buildCommand(switchType, true), commandTopic);
                     } else {
                         Log.v(LOG_TAG, switchName + " Switch Off");
-                        publish(buildCommand(switchType, "off"), commandTopic);
+                        publish(buildCommand(switchType, false), commandTopic);
                     }
                 }
             });
         }
     }
 
+    private void showInterface(){
+
+    }
+
     public void createButtons() {
         FloatingActionButton alarmButton = findViewById(R.id.buzzerButton);
+        Button connectButton = findViewById(R.id.connectAWSButton);
+
+        connectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                connectClient();
+            }
+        });
 
         alarmButton.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if(event.getAction() == MotionEvent.ACTION_DOWN) {
                     Log.v(LOG_TAG, "Alarm Button Press");
-                    publish(buildCommand("buzzer", "on"), commandTopic);
+                    publish(buildCommand("buzzer", true), commandTopic);
                 } else if (event.getAction() == MotionEvent.ACTION_UP) {
                     Log.v(LOG_TAG, "Alarm Button Lift");
-                    publish(buildCommand("buzzer", "off"), commandTopic);
+                    publish(buildCommand("buzzer", false), commandTopic);
                 }
                 return true;
             }
@@ -282,7 +322,7 @@ public class MainActivity extends AppCompatActivity {
         Log.v(LOG_TAG, data.toString());
         try {
             if (data.has("data")) {
-                HashMap<String, TextView> dataTypes = new HashMap<>(displayDataTextViews);
+                HashMap<String, HashMap> dataTypes = new HashMap<>(displayDataTextViews);
                 Iterator map = dataTypes.entrySet().iterator();
 
                 JSONObject received_data = (JSONObject) data.get("data");
@@ -292,7 +332,7 @@ public class MainActivity extends AppCompatActivity {
                     Map.Entry current = (Map.Entry)map.next();
                     String key = (String) current.getKey();
                     if(received_data.has(key)) {
-                        TextView viewToUpdate = (TextView) current.getValue();
+                        HashMap<String, TextView> views = (HashMap) current.getValue();
                         Boolean dataValue = (Boolean) received_data.get(key);
                         String result;
                         if(dataValue) {
@@ -300,7 +340,7 @@ public class MainActivity extends AppCompatActivity {
                         } else {
                             result = "No " + key.toUpperCase() + " Detected!";
                         }
-                        viewToUpdate.setText(result);
+                        views.get("data").setText(result);
                     }
                 }
             }
@@ -377,7 +417,12 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onStatusChanged(final AWSIotMqttClientStatus status,
                                             final Throwable throwable) {
-                    Log.d(LOG_TAG, "Status = " + String.valueOf(status));
+                    String statusConnect = String.valueOf(status);
+                    Log.d(LOG_TAG, "Status = " + statusConnect);
+
+                    if (statusConnect.equals("Connected")) {
+                        subscribe(dataTopic);
+                    }
 
                     runOnUiThread(new Runnable() {
                         @Override
@@ -432,6 +477,7 @@ public class MainActivity extends AppCompatActivity {
                     // load keystore from file into memory to pass on connection
                     clientKeyStore = AWSIotKeystoreHelper.getIotKeystore(certificateId,
                             keystorePath, keystoreName, keystorePassword);
+                    awsInitialisedStatus = true;
                     /* initIoTClient is invoked from the callback passed during AWSMobileClient initialization.
                     The callback is executed on a background thread so UI update must be moved to run on UI Thread. */
                 } else {

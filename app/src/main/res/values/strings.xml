@@ -2,11 +2,14 @@
     <string name="app_name">IoTController</string>
     <string name="action_settings">Settings</string>
     <string name="sample_rate_button">Subscribe</string>
+    <string name="textview_placeholder">TextView</string>
 
     <string name="pir_sensor">Motion</string>
     <string name="sound_sensor">Sound</string>
     <string name="light_sensor">Light</string>
     <string name="buzzer">Buzzer</string>
+
+    <string name="connection_button">Connect To Thing</string>
 
     <string name="table_data_type_header">Data Source</string>
     <string name="table_data_value_header">Data</string>
